@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Spotify Player + Auth</title>
+  <title>Aeroser Player</title>
   <script src="https://sdk.scdn.co/spotify-player.js"></script>
   <style>
     body {
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>Spotify SDK Area 🎧</h1>
+  <h1>Aeroser SDK Player 🎧</h1>
   <button id="login">Login with Spotify</button>
   <button id="play" disabled>Play Track</button>
 
@@ -39,26 +39,24 @@
   <div id="status"></div>
 
   <script>
-    const clientId = '9ab6d34da91440ae97fd84458ee6a1c0';
+    const clientId = '6a0e933f3c6b4b93ab104b5958c1a329';
     const redirectUri = 'https://sergespline.github.io/spotify-sdk-aeroser/';
     const scopes = [
       'streaming',
       'user-read-email',
-      'user-read-private'
+      'user-read-private',
+      'user-modify-playback-state'
     ];
 
     let accessToken = '';
     let deviceId = '';
 
-    // 🔐 Step 1: Redirect to Spotify Auth
-    document.getElementById('login').onclick = () => {
-      document.getElementById('status').innerText = 'Redirecting to Spotify... 🔄';
-      const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes.join(' '))}`;
-      window.location.href = authUrl;
-    };
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('login').addEventListener('click', () => {
+        const authUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=token&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scopes.join(' '))}`;
+        window.location.href = authUrl;
+      });
 
-    // 🔑 Step 2: Extract token from URL hash
-    window.onload = () => {
       const hash = window.location.hash;
       if (hash.includes('access_token')) {
         const params = new URLSearchParams(hash.substring(1));
@@ -69,9 +67,8 @@
       } else {
         document.getElementById('status').innerText = 'No access token found ❌';
       }
-    };
+    });
 
-    // 🎵 Step 3: Initialize Spotify Web Playback SDK
     function initializePlayer() {
       window.onSpotifyWebPlaybackSDKReady = () => {
         const player = new Spotify.Player({
@@ -103,6 +100,23 @@
         });
 
         player.connect();
+
+        document.getElementById('play').addEventListener('click', () => {
+          fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              uris: ['spotify:track:7ouMYWpwJ422jRcDASZB7P'] // Blinding Lights
+            }),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }).then(() => {
+            document.getElementById('status').innerText = 'Track playing 🎶';
+          }).catch(err => {
+            document.getElementById('status').innerText = `Playback error: ${err.message}`;
+          });
+        });
       };
     }
   </script>
